@@ -1,57 +1,39 @@
-// app/components/timer.tsx
+import { useState, useEffect } from "react";
+import { useRouter } from "next/router"; // For getting the subject from the query
 
-'use client';
+const TimerPage = () => {
+  const [time, setTime] = useState(0);
+  const [isRunning, setIsRunning] = useState(false);
+  const router = useRouter();
+  const { subject } = router.query;  // Get the subject from the URL
 
-import { useState, useEffect, useRef } from "react";
+  useEffect(() => {
+    let timer: NodeJS.Timeout;
+    if (isRunning) {
+      timer = setInterval(() => {
+        setTime((prevTime) => prevTime + 1);
+      }, 1000);
+    } else {
+      clearInterval(timer);
+    }
+    return () => clearInterval(timer);
+  }, [isRunning]);
 
-export default function Timer() {
-    const [time, setTime] = useState(0);
-    const [isRunning, setIsRunning] = useState(false);
-    const timerRef = useRef(null);
+  const stopTimer = () => {
+    setIsRunning(false);
+    router.push("/"); // Redirect back to main page after stopping the timer
+  };
 
-    useEffect(() => {
-        if (typeof window !== "undefined") {
-            if (isRunning) {
-                timerRef.current = setInterval(() => {
-                    setTime((prevTime) => prevTime + 1);
-                }, 1000);
-            } else {
-                if (timerRef.current) {
-                    clearInterval(timerRef.current);
-                }
-            }
-        }
+  return (
+    <div className="flex flex-col items-center justify-center min-h-screen">
+      <h2 className="text-xl">{subject}</h2>
+      <div className="text-3xl mt-4">{time}s</div>
 
-        return () => {
-            if (timerRef.current) {
-                clearInterval(timerRef.current);
-            }
-        };
-    }, [isRunning]);
+      <button onClick={stopTimer} className="mt-4 bg-red-500 text-white py-2 px-4 rounded">
+        Stop Timer
+      </button>
+    </div>
+  );
+};
 
-    const startTimer = () => setIsRunning(true);
-    const stopTimer = () => setIsRunning(false);
-
-    return (
-        <div className="flex flex-col items-center p-4 border rounded-lg shadow-md w-64">
-            <h2 className="text-xl font-semibold mb-2">Timer</h2>
-            <p className="text-2xl font-bold mb-4">{time} sec</p>
-            <div className="flex space-x-4">
-                <button
-                    onClick={startTimer}
-                    disabled={isRunning}
-                    className="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded"
-                >
-                    Start
-                </button>
-                <button
-                    onClick={stopTimer}
-                    disabled={!isRunning}
-                    className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded"
-                >
-                    Stop
-                </button>
-            </div>
-        </div>
-    );
-}
+export default TimerPage;
