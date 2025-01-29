@@ -13,16 +13,23 @@ const TimerPage = () => {
       timer = setInterval(() => {
         setTime((prevTime) => prevTime + 1);
       }, 1000);
-    } else {
-      clearInterval(timer);
     }
-    return () => clearInterval(timer);
+    return () => {
+      if (timer) {
+        clearInterval(timer);
+      }
+    };
   }, [isRunning]);
 
   const stopTimer = () => {
     setIsRunning(false);
     router.push("/"); // Redirect back to main page after stopping the timer
   };
+
+  // Start the timer automatically when the component mounts
+  useEffect(() => {
+    setIsRunning(true);
+  }, []);
 
   return (
     <div className="flex flex-col items-center justify-center min-h-screen">
