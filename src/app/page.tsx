@@ -1,17 +1,27 @@
-'use client';  // Ensure this is a client-side component
+'use client';
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 
 export default function Home() {
-  const [subjects, setSubjects] = useState<string[]>([]);  // State to store user-created subjects
-  const [newSubject, setNewSubject] = useState("");  // State for the new subject input
+  const [subjects, setSubjects] = useState<string[]>([]);
+  const [newSubject, setNewSubject] = useState("");
+
+  // Load subjects from localStorage when the component mounts
+  useEffect(() => {
+    const storedSubjects = localStorage.getItem("subjects");
+    if (storedSubjects) {
+      setSubjects(JSON.parse(storedSubjects));
+    }
+  }, []);
 
   // Function to handle adding a new subject
   const handleAddSubject = () => {
     if (newSubject.trim() !== "") {
-      setSubjects([...subjects, newSubject]);
-      setNewSubject("");  // Clear the input field after adding
+      const updatedSubjects = [...subjects, newSubject];
+      setSubjects(updatedSubjects);
+      localStorage.setItem("subjects", JSON.stringify(updatedSubjects)); // Save to localStorage
+      setNewSubject(""); 
     }
   };
 
@@ -42,7 +52,7 @@ export default function Home() {
           {subjects.map((subject) => (
             <Link
               key={subject}
-              href={`/timer?subject=${subject}`}
+              href={`/timer?subject=${encodeURIComponent(subject)}`}
               className="text-blue-500 hover:underline"
             >
               {subject}
