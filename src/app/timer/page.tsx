@@ -1,50 +1,61 @@
-'use client';  // Ensure this is a client-side component
+'use client';
 
 import { useState, useEffect } from "react";
-import { useSearchParams } from "next/navigation";  // Import useSearchParams
+import { useSearchParams, useRouter } from "next/navigation";
 
 const TimerPage = () => {
   const [time, setTime] = useState(0);
-  const [isRunning, setIsRunning] = useState(true);  // Start the timer immediately on load
-  const searchParams = useSearchParams();  // Access the query params
-  const subject = searchParams.get("subject");  // Get the subject from URL query params
+  const [isRunning, setIsRunning] = useState(true);
+  const searchParams = useSearchParams();
+  const router = useRouter();
+  const subject = searchParams.get("subject");
 
-  // Timer logic: start and stop based on `isRunning`
   useEffect(() => {
-    let timer: NodeJS.Timeout;
+    let timer: NodeJS.Timeout | null = null;
 
     if (isRunning) {
-      // Start the timer when isRunning is true
       timer = setInterval(() => {
-        setTime((prevTime) => prevTime + 1); // Increment the time by 1 second
+        setTime((prevTime) => prevTime + 1);
       }, 1000);
-    } else {
-      // Clear the timer when it's not running
-      clearInterval(timer);
     }
 
-    // Clean up the timer on component unmount
-    return () => clearInterval(timer);
-  }, [isRunning]);  // Re-run effect whenever isRunning changes
+    return () => {
+      if (timer) clearInterval(timer);
+    };
+  }, [isRunning]);
 
   const stopTimer = () => {
-    setIsRunning(false);  // Stop the timer
-    window.location.href = "/";  // Navigate back to the main page
+    setIsRunning(false);
+
+    if (subject) {
+      const now = new Date();
+      const record = {
+        subject,
+        date: now.toLocaleDateString(),
+        time: now.toLocaleTimeString(),
+        duration: `${Math.floor(time / 60)}m ${time % 60}s`,
+      };
+
+      // Retrieve existing records and update them
+      const storedRecords = JSON.parse(localStorage.getItem("timerRecords") || "[]");
+      storedRecords.push(record);
+      localStorage.setItem("timerRecords", JSON.stringify(storedRecords));
+    }
+
+    // Redirect back to the main page after stopping
+    router.push("/");
   };
 
   if (!subject) {
-    return <div>Loading...</div>;  // Show a loading message until the subject is available
+    return <div>Loading...</div>;
   }
 
   return (
     <div className="flex flex-col items-center justify-center min-h-screen">
-      <h2 className="text-xl">{subject}</h2>  {/* Display the current subject */}
-      <div className="text-3xl mt-4">{time}s</div>  {/* Display the timer */}
+      <h2 className="text-xl">{subject}</h2>
+      <div className="text-3xl mt-4">{Math.floor(time / 60)}m {time % 60}s</div>
       <div className="mt-4">
-        <button
-          onClick={stopTimer}
-          className="bg-red-500 text-white py-2 px-4 rounded"
-        >
+        <button onClick={stopTimer} className="bg-red-500 text-white py-2 px-4 rounded">
           Stop Timer
         </button>
       </div>
