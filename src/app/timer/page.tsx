@@ -1,66 +1,64 @@
-"use client"; // Ensure this runs on the client side
+'use client';
 
-import { useState, useEffect, Suspense } from "react";
-import { useSearchParams } from "next/navigation";
+import { useState, useEffect } from "react";
+import { useRouter } from "next/router"; // For getting the subject from the query
 
 const TimerPage = () => {
   const [time, setTime] = useState(0);
-  const [isRunning, setIsRunning] = useState(true);
-  const searchParams = useSearchParams();
-  const subject = searchParams.get("subject");
+  const [isRunning, setIsRunning] = useState(false);
+  const router = useRouter();
+  const { subject } = router.query;  // Get the subject from the URL
 
   useEffect(() => {
     let timer: NodeJS.Timeout;
-
     if (isRunning) {
       timer = setInterval(() => {
         setTime((prevTime) => prevTime + 1);
       }, 1000);
     }
-
-    return () => clearInterval(timer);
+    return () => {
+      if (timer) {
+        clearInterval(timer);
+      }
+    };
   }, [isRunning]);
 
   const stopTimer = () => {
     setIsRunning(false);
 
     // Get previous records
-    const existingRecords = JSON.parse(localStorage.getItem("timeRecords") || "[]");
+    const existingRecords = JSON.parse(localStorage.getItem("timerRecords") || "[]");
 
     // New record
     const newRecord = {
       subject: subject || "Unknown",
-      time,
-      date: new Date().toLocaleString(),
+      date: new Date().toLocaleDateString(),
+      time: new Date().toLocaleTimeString(),
+      duration: `${time}s`,
     };
 
     // Save updated records to localStorage
     const updatedRecords = [...existingRecords, newRecord];
-    localStorage.setItem("timeRecords", JSON.stringify(updatedRecords));
+    localStorage.setItem("timerRecords", JSON.stringify(updatedRecords));
 
-    console.log("Saved Records:", updatedRecords); // Debugging log
-
-    // Redirect AFTER saving (short delay to ensure localStorage updates)
-    setTimeout(() => {
-      window.location.href = "/";
-    }, 500); // 500ms delay
+    // Redirect back to main page after stopping the timer
+    router.push("/");
   };
 
+  // Start the timer automatically when the component mounts
+  useEffect(() => {
+    setIsRunning(true);
+  }, []);
+
   return (
-    <Suspense fallback={<div>Loading...</div>}>
-      <div className="flex flex-col items-center justify-center min-h-screen">
-        <h2 className="text-xl">{subject || "Loading..."}</h2>
-        <div className="text-3xl mt-4">{time}s</div>
-        <div className="mt-4">
-          <button
-            onClick={stopTimer}
-            className="bg-red-500 text-white py-2 px-4 rounded"
-          >
-            Stop Timer
-          </button>
-        </div>
-      </div>
-    </Suspense>
+    <div className="flex flex-col items-center justify-center min-h-screen">
+      <h2 className="text-xl">{subject}</h2>
+      <div className="text-3xl mt-4">{time}s</div>
+
+      <button onClick={stopTimer} className="mt-4 bg-red-500 text-white py-2 px-4 rounded">
+        Stop Timer
+      </button>
+    </div>
   );
 };
 
