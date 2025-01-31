@@ -1,13 +1,13 @@
 'use client';
 
 import { useState, useEffect } from "react";
-import { useRouter } from "next/router"; // For getting the subject from the query
+import { useSearchParams } from "next/navigation";
 
 const TimerPage = () => {
   const [time, setTime] = useState(0);
   const [isRunning, setIsRunning] = useState(false);
-  const router = useRouter();
-  const { subject } = router.query;  // Get the subject from the URL
+  const searchParams = useSearchParams();
+  const subject = searchParams.get("subject"); // Get the subject from the URL
 
   useEffect(() => {
     let timer: NodeJS.Timeout;
@@ -42,7 +42,7 @@ const TimerPage = () => {
     localStorage.setItem("timerRecords", JSON.stringify(updatedRecords));
 
     // Redirect back to main page after stopping the timer
-    router.push("/");
+    window.location.href = "/";
   };
 
   // Start the timer automatically when the component mounts
